@@ -2,12 +2,36 @@
 # pytube
 # opencv-python
 # pillow
+"""
+Outputs an image with the average colors from a video
+Created : November 17, 2022
+
+V 1.0
+- initial file
+
+V 1.1 
+- Update to batch process whatever is in the 'input' folder
+
+"""
+
 
 from pytube import YouTube
 import cv2
 import os 
 import shutil
 from PIL import Image, ImageStat, ImageDraw
+
+"""
+Global Configurations
+
+INPUT_FOLDER (str) : relative filepath of input folder (put in videos)
+OUTPUT_FOLDER (str) : relative filepath of the output folder (outputs pngs and frames)
+PREVIEW_OUTPUT (bool) : whether or not to preview the png outputs
+"""
+INPUT_FOLDER = "input" 
+OUTPUT_FOLDER = "output"
+PREVIEW_OUTPUT = False 
+
 
 #Get average colour of frames
 def get_average_colour(image_name, colour_list, frame_folder):
@@ -34,10 +58,10 @@ def get_colour_list(download_folder, download_name, frame_folder):
 def image_scale(index, scale):
   return int(index * scale)
 
-def average_colours(download_name="test"):
-  download_folder = "cache"
+def average_colours(download_name):
+  download_folder = INPUT_FOLDER
   # download_name = "test"
-  frame_folder = os.path.join(download_folder,"frames")
+  frame_folder = os.path.join(OUTPUT_FOLDER,download_name, "frames")
 
   # try:
   #   shutil.rmtree(download_folder)
@@ -55,10 +79,10 @@ def average_colours(download_name="test"):
   # stream.download(download_folder, download_name)
 
 
-  print("averaging colours...")
+  print(f"Averaging colours for {download_name}")
   colour_list = get_colour_list(download_folder, download_name, frame_folder)
 
-  print("writing image...")
+  print(f"Writing image for {download_name}")
   output_image = Image.new('RGB', (len(colour_list), len(colour_list)), color = 'white')
   d = ImageDraw.Draw(output_image)
 
@@ -67,13 +91,28 @@ def average_colours(download_name="test"):
   
   output_image = output_image.resize((1920,1080),resample=Image.BILINEAR)
   output_image.format = "PNG"
-  output_image.save("output.png", format="PNG")
-  output_image.show()
+  output_image.save(
+    os.path.join(OUTPUT_FOLDER, f"{download_name}.png"), format="PNG" # save to output
+  )
+  if PREVIEW_OUTPUT: 
+    output_image.show()
 
 
 if __name__ == "__main__": 
   # average_colours(str(input("Enter a YouTube video URL:")))
-  print("Please put the file into cache")
-  average_colours(str(input("Enter a file name:")))
+  print("Reminder : Please put the name of the folder into the `INPUT_FOLDER` config")
+  # average_colours(str(input("Enter a file name:")))
 
+  # set current working directory to file directory
+  os.chdir(os.path.dirname(os.path.abspath(__file__)))
+  
+  # Folder for images
+  input_files = os.listdir(os.path.join(os.path.dirname(os.path.abspath(__file__)) , INPUT_FOLDER))
+  
+  # iterate over all files
+  for video_file in input_files:
+    video_name = video_file.rsplit(".",1)[0] # Split file to get before .mp4
+    average_colours(video_name)
+
+  print("Complete")
 
